@@ -1,44 +1,40 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 func autoChunkHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json := generateHeavyJson()
-	w.Write(json)
+	w.Header().Set("Content-Type", "text/plain")
+	message := getMessageFromFile("message.txt")
+	w.Write(message)
 }
 
 func manualChunkHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json := generateHeavyJson()
+	w.Header().Set("Content-Type", "text/plain")
+	message := getMessageFromFile("message.txt")
 
 	manualChunkSize := 1024 // 1KB
 
-	for i := 0; i < len(json); i += manualChunkSize {
+	for i := 0; i < len(message); i += manualChunkSize {
 		flusher, _ := w.(http.Flusher)
-		chunk := json[i : i+manualChunkSize]
+		end := i + manualChunkSize
+		if end > len(message) {
+			end = len(message)
+		}
+		chunk := message[i:end]
 		w.Write(chunk)
 		flusher.Flush()
 	}
 }
 
-func generateHeavyJson() []byte {
-	json := []byte("[")
-	for i := 0; i < 20000; i++ {
-		json = append(json, []byte(`{"id":`)...)
-		json = append(json, []byte(`"`)...)
-		json = append(json, []byte(strconv.Itoa(i))...)
-		json = append(json, []byte(`"}`)...)
-		if i != 9999 {
-			json = append(json, []byte(",")...)
-		}
+func getMessageFromFile(filename string) []byte { // getMessageFromFile を []byte 型に変更
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return []byte("Failed to read message")
 	}
-	json = append(json, []byte("]")...)
-
-	return json
+	return content
 }
 
 func main() {
