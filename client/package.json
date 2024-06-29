@@ -1,0 +1,15 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "run:manual-chunk": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx logManualChunked.ts",
+    "run:auto-chunk": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx logAutoChunked.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "tsx": "^4.16.0"
+  }
+}
