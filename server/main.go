@@ -13,7 +13,7 @@ func heavyJsonHandler(w http.ResponseWriter, r *http.Request) {
 
 func generateHeavyJson() []byte {
 	json := []byte("[")
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 20000; i++ {
 		json = append(json, []byte(`{"id":`)...)
 		json = append(json, []byte(`"`)...)
 		json = append(json, []byte(strconv.Itoa(i))...)
