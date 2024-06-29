@@ -3,12 +3,28 @@ package main
 import (
 	"net/http"
 	"strconv"
+	"time"
 )
 
-func heavyJsonHandler(w http.ResponseWriter, r *http.Request) {
+func autoChunkHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json := generateHeavyJson()
 	w.Write(json)
+}
+
+func manualChunkHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json := generateHeavyJson()
+
+	manualChunkSize := 10000
+
+	for i := 0; i < len(json); i += manualChunkSize {
+		flusher, _ := w.(http.Flusher)
+		chunk := json[i : i+manualChunkSize]
+		w.Write(chunk)
+		time.Sleep(1 * time.Millisecond) // TCPバッファリングを回避するために1ms待つ
+		flusher.Flush()
+	}
 }
 
 func generateHeavyJson() []byte {
@@ -28,6 +44,7 @@ func generateHeavyJson() []byte {
 }
 
 func main() {
-	http.HandleFunc("/", heavyJsonHandler)
+	http.HandleFunc("/auto-chunk", autoChunkHandler)
+	http.HandleFunc("/manual-chunk", manualChunkHandler)
 	http.ListenAndServe(":8080", nil)
 }
