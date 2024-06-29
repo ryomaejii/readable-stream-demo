@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func autoChunkHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +31,35 @@ func manualChunkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func eventStreamHandler(w http.ResponseWriter, r *http.Request) {
+	// Set the appropriate headers for SSE
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	// Send an initial message indicating connection is established
+	fmt.Fprintf(w, "data: Connected to event stream\n\n")
+	flusher, _ := w.(http.Flusher)
+	flusher.Flush()
+
+	// Simulate sending events periodically
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Send a new event
+			eventData := fmt.Sprintf("data: Event occurred at %v\n\n", time.Now())
+			fmt.Fprintf(w, eventData)
+			flusher.Flush()
+		case <-r.Context().Done():
+			fmt.Println("Client closed connection")
+			return
+		}
+	}
+}
+
 func getMessageFromFile(filename string) []byte { // getMessageFromFile を []byte 型に変更
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -40,6 +71,7 @@ func getMessageFromFile(filename string) []byte { // getMessageFromFile を []by
 func main() {
 	http.HandleFunc("/auto-chunk", autoChunkHandler)
 	http.HandleFunc("/manual-chunk", manualChunkHandler)
+	http.HandleFunc("/server-sent-events", eventStreamHandler)
 
 	server := &http.Server{
 		Addr:      ":8080",
